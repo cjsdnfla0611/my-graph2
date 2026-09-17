@@ -142,6 +142,43 @@ with st.container():
 
 st.markdown("---")
 
+# ----------------------------------------------------
+# 4. 개봉일 스크린수(first_scrn) vs 총 관객수(total_audi) 산점도
+# ----------------------------------------------------
+st.subheader("4. 개봉일 스크린수와 총 관객수의 관계")
+
+fig4 = px.scatter(
+    df,
+    x='first_scrn',
+    y='total_audi',
+    color='primary_genre',
+    hover_name='movieNm',
+    labels={
+        'first_scrn': '개봉일 스크린수 (개)',
+        'total_audi': '총 관객수 (명)',
+        'primary_genre': '장르'
+    },
+    title='개봉일 스크린수 vs 총 관객수 산점도'
+)
+
+# 마우스오버 툴팁 커스텀 설정 (영화명 + 스크린수 + 총 관객수)
+fig4.update_traces(
+    hovertemplate='<b>영화명: %{hovertext}</b><br>개봉일 스크린수: %{x:,}개<br>총 관객수: %{y:,}명'
+)
+
+fig4.update_layout(
+    margin=dict(t=50, b=20, l=20, r=20),
+    legend_title_text='장르'
+)
+
+st.plotly_chart(fig4, use_container_width=True)
+
+# 시각화 해석 및 섹션 구분
+with st.container():
+    st.info("💡 **이 그래프로 알 수 있는 것:** 개봉일 스크린수가 많을수록 대체로 총 관객수가 높게 나타나는 양의 상관관계를 보여주며, 초기 스크린 확보가 흥행의 중요한 요소임을 알 수 있습니다.")
+
+st.markdown("---")
+
 # 데이터 목록 확인 기능
 with st.expander("📄 원본 데이터 살펴보기"):
     st.dataframe(df[['movieCd', 'movieNm', 'openDt', 'primary_genre', 'nation', 'first_scrn', 'first_show', 'first_week_audi', 'total_audi', 'days_in_top10']])
