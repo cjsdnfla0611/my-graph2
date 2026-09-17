@@ -15,8 +15,9 @@ def load_data():
     url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movies.csv"
     df = pd.read_csv(url)
     
-    # 장르 처리: 세로막대 기호(|)로 분리된 경우 첫 번째 장르만 사용
+    # 장르 및 국가 결측치 처리
     df['primary_genre'] = df['genre'].fillna('기타').astype(str).apply(lambda x: x.split('|')[0].strip())
+    df['nation'] = df['nation'].fillna('기타').astype(str)
     
     return df
 
@@ -161,7 +162,7 @@ fig4 = px.scatter(
     title='개봉일 스크린수 vs 총 관객수 산점도'
 )
 
-# 마우스오버 툴팁 커스텀 설정 (영화명 + 스크린수 + 총 관객수)
+# 마우스오버 툴팁 커스텀 설정
 fig4.update_traces(
     hovertemplate='<b>영화명: %{hovertext}</b><br>개봉일 스크린수: %{x:,}개<br>총 관객수: %{y:,}명'
 )
@@ -176,6 +177,122 @@ st.plotly_chart(fig4, use_container_width=True)
 # 시각화 해석 및 섹션 구분
 with st.container():
     st.info("💡 **이 그래프로 알 수 있는 것:** 개봉일 스크린수가 많을수록 대체로 총 관객수가 높게 나타나는 양의 상관관계를 보여주며, 초기 스크린 확보가 흥행의 중요한 요소임을 알 수 있습니다.")
+
+st.markdown("---")
+
+# ----------------------------------------------------
+# 5. 주요 장르별 총 관객수 박스플롯 (상자 그림)
+# ----------------------------------------------------
+st.subheader("5. 주요 장르별(10편 이상) 총 관객수 박스플롯")
+
+# 영화 편수가 10편 이상인 장르 필터링
+genre_counts_series = df['primary_genre'].value_counts()
+major_genres = genre_counts_series[genre_counts_series >= 10].index
+df_major_genres = df[df['primary_genre'].isin(major_genres)]
+
+fig5 = px.box(
+    df_major_genres,
+    x='primary_genre',
+    y='total_audi',
+    color='primary_genre',
+    hover_name='movieNm',
+    points='outliers',
+    labels={
+        'primary_genre': '장르',
+        'total_audi': '총 관객수 (명)'
+    },
+    title='주요 장르별 총 관객수 분포 및 아웃라이어(상자 그림)'
+)
+
+# 마우스오버 툴팁 커스텀 설정
+fig5.update_traces(
+    hovertemplate='<b>영화명: %{hovertext}</b><br>총 관객수: %{y:,}명'
+)
+
+fig5.update_layout(
+    margin=dict(t=50, b=20, l=20, r=20),
+    showlegend=False
+)
+
+st.plotly_chart(fig5, use_container_width=True)
+
+# 시각화 해석 및 섹션 구분
+with st.container():
+    st.info("💡 **이 그래프로 알 수 있는 것:** 주요 장르별 관객수의 중앙값 및 범위를 비교할 수 있으며, 상자 밖의 아웃라이어 점을 통해 해당 장르 내에서 대흥행을 거둔 극단적 흥행작들을 확인할 수 있습니다.")
+
+st.markdown("---")
+
+# ----------------------------------------------------
+# 6. 개봉일 스크린수 vs 총 관객수 버블 차트 (점 크기: 개봉 첫 주 관객수)
+# ----------------------------------------------------
+st.subheader("6. 개봉일 스크린수 vs 총 관객수 (버블 차트)")
+
+fig6 = px.scatter(
+    df,
+    x='first_scrn',
+    y='total_audi',
+    size='first_week_audi',
+    color='primary_genre',
+    hover_name='movieNm',
+    size_max=40,
+    labels={
+        'first_scrn': '개봉일 스크린수 (개)',
+        'total_audi': '총 관객수 (명)',
+        'first_week_audi': '개봉 첫 주 관객수 (명)',
+        'primary_genre': '장르'
+    },
+    title='개봉일 스크린수 vs 총 관객수 버블 차트 (버블 크기: 개봉 첫 주 관객수)'
+)
+
+# 마우스오버 툴팁 커스텀 설정
+fig6.update_traces(
+    hovertemplate='<b>영화명: %{hovertext}</b><br>개봉일 스크린수: %{x:,}개<br>총 관객수: %{y:,}명<br>개봉 첫 주 관객수: %{marker.size:,}명'
+)
+
+fig6.update_layout(
+    margin=dict(t=50, b=20, l=20, r=20),
+    legend_title_text='장르'
+)
+
+st.plotly_chart(fig6, use_container_width=True)
+
+# 시각화 해석 및 섹션 구분
+with st.container():
+    st.info("💡 **이 그래프로 알 수 있는 것:** 개봉일 스크린수가 많을수록 첫 주 관객수(버블 크기)도 대체로 크며, 최종 총 관객수까지 이어지는 3개 지표 간의 다차원적 흥행 메커니즘을 한눈에 파악할 수 있습니다.")
+
+st.markdown("---")
+
+# ----------------------------------------------------
+# 7. 제작 국가(nation) -> 장르(primary_genre) 계층 선버스트 차트
+# ----------------------------------------------------
+st.subheader("7. 제작 국가 및 장르별 영화 편수 (선버스트 차트)")
+
+# 제작 국가와 장르별 영화 편수 집계
+df_nation_genre = df.groupby(['nation', 'primary_genre']).size().reset_index(name='count')
+
+fig7 = px.sunburst(
+    df_nation_genre,
+    path=['nation', 'primary_genre'],
+    values='count',
+    color='nation',
+    color_discrete_sequence=px.colors.qualitative.Pastel1,
+    title='제작 국가 및 장르별 영화 편수 분포 (선버스트)'
+)
+
+# 마우스오버 툴팁 커스텀 설정
+fig7.update_traces(
+    hovertemplate='<b>%{label}</b><br>영화 편수: %{value}편<br>비율: %{percentParent:.1%}'
+)
+
+fig7.update_layout(
+    margin=dict(t=50, b=20, l=20, r=20)
+)
+
+st.plotly_chart(fig7, use_container_width=True)
+
+# 시각화 해석 및 섹션 구분
+with st.container():
+    st.info("💡 **이 그래프로 알 수 있는 것:** 국가별(안쪽 고리)로 어떤 장르(바깥쪽 고리)의 영화가 얼마나 다양하게 제작되고 개봉했는지 계층적 비중과 영화 편수를 한눈에 비교할 수 있습니다.")
 
 st.markdown("---")
 
