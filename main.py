@@ -9,13 +9,13 @@ st.set_page_config(
     layout="wide"
 )
 
-# 데이터 로드 및 전처리 (캐싱 적용)
+# 데이터 로드 함수 (캐싱 적용)
 @st.cache_data
 def load_data():
     url = "https://raw.githubusercontent.com/greatsong/modudata/main/data/kobis_movies.csv"
     df = pd.read_csv(url)
     
-    # 장르 처리: '|' 기호로 연결된 여러 장르 중 첫 번째 장르만 추출
+    # 장르 처리: 세로막대 기호(|)로 분리된 경우 첫 번째 장르만 사용
     df['primary_genre'] = df['genre'].fillna('기타').astype(str).apply(lambda x: x.split('|')[0].strip())
     
     return df
@@ -42,7 +42,7 @@ st.subheader("1. 장르별 영화 편수 분포")
 genre_counts = df['primary_genre'].value_counts().reset_index()
 genre_counts.columns = ['장르', '영화 편수']
 
-# Plotly 도넛 그래프 생성 (hole 파라미터로 도넛 형태 구현)
+# Plotly 도넛 그래프 생성
 fig1 = px.pie(
     genre_counts,
     names='장르',
@@ -52,7 +52,7 @@ fig1 = px.pie(
     color_discrete_sequence=px.colors.qualitative.Pastel
 )
 
-# 마우스오버 툴팁 설정 (편수와 비율 표시)
+# 마우스오버 툴팁 설정 (편수 + 비율)
 fig1.update_traces(
     textinfo='percent+label',
     hovertemplate='<b>장르: %{label}</b><br>영화 편수: %{value}편<br>비율: %{percent}'
@@ -66,42 +66,45 @@ fig1.update_layout(
 # 그래프 출력
 st.plotly_chart(fig1, use_container_width=True)
 
-# '이 그래프로 알 수 있는 것' 영역
+# 시각화 해석 및 섹션 구분
 with st.container():
-    st.info("💡 **이 그래프로 알 수 있는 것:** 박스오피스 상위권 영화 중 주요 장르가 차지하는 비중과 장르별 편수 분포를 한눈에 파악할 수 있습니다.")
+    st.info("💡 **이 그래프로 알 수 있는 것:** 박스오피스 상위권 영화 중 주요 장르가 차지하는 비중과 장르별 영화 편수 분포를 확인할 수 있습니다.")
 
 st.markdown("---")
 
 # ----------------------------------------------------
-# 2. 개봉 첫 주 관객수 vs 총 관객수 (산점도 그래프 예시)
+# 2. 장르 및 영화별 총 관객수 (트리맵)
 # ----------------------------------------------------
-st.subheader("2. 개봉 첫 주 관객수와 총 관객수의 관계")
+st.subheader("2. 장르 및 영화별 총 관객수 분포 (트리맵)")
 
-fig2 = px.scatter(
+# Plotly 트리맵 그래프 생성 (계층 구조: 장르 -> 영화명, 크기: 총 관객수)
+fig2 = px.treemap(
     df,
-    x='first_week_audi',
-    y='total_audi',
+    path=[px.Constant("전체 장르"), 'primary_genre', 'movieNm'],
+    values='total_audi',
     color='primary_genre',
-    size='days_in_top10',
-    hover_name='movieNm',
-    labels={
-        'first_week_audi': '개봉 첫 주 관객수 (명)',
-        'total_audi': '총 관객수 (명)',
-        'primary_genre': '장르',
-        'days_in_top10': 'Top 10 유지 일수'
-    },
-    title='개봉 첫 주 관객수 vs 총 관객수 (점 크기: Top10 유지 일수)'
+    color_discrete_sequence=px.colors.qualitative.Set3,
+    title='장르 및 영화별 총 관객수 분포'
 )
 
-fig2.update_layout(margin=dict(t=50, b=20, l=20, r=20))
+# 마우스오버 툴팁 설정 (영화명 + 총 관객)
+fig2.update_traces(
+    hovertemplate='<b>%{label}</b><br>총 관객수: %{value:,}명'
+)
+
+fig2.update_layout(
+    margin=dict(t=50, b=20, l=20, r=20)
+)
+
+# 그래프 출력
 st.plotly_chart(fig2, use_container_width=True)
 
-# '이 그래프로 알 수 있는 것' 영역
+# 시각화 해석 및 섹션 구분
 with st.container():
-    st.info("💡 **이 그래프로 알 수 있는 것:** 개봉 첫 주 관객수가 높은 영화일수록 최종 총 관객수도 높게 나타나는 강한 양의 상관관계를 확인할 수 있습니다.")
+    st.info("💡 **이 그래프로 알 수 있는 것:** 각 장르 내에서 어떤 영화가 많은 총 관객수를 기록하며 흥행을 이끌었는지 직관적으로 비교할 수 있습니다.")
 
 st.markdown("---")
 
-# 원본 데이터 확인용 (Expander)
+# 데이터 목록 확인 기능
 with st.expander("📄 원본 데이터 살펴보기"):
-    st.dataframe(df)
+    st.dataframe(df[['movieCd', 'movieNm', 'openDt', 'primary_genre', 'nation', 'first_scrn', 'first_show', 'first_week_audi', 'total_audi', 'days_in_top10']])
