@@ -69,7 +69,7 @@ st.plotly_chart(fig1, use_container_width=True)
 
 # 시각화 해석 및 섹션 구분
 with st.container():
-    st.info("💡 **이 그래프로 알 수 있는 것:** 박스오피스 상위권 영화 중 주요 장르가 차지하는 비중과 장르별 영화 편수 분포를 확인할 수 있습니다.")
+    st.info("💡 **이 그래프로 알 수 있는 것:** 드라마, 애니메이션 영화가 많은 것을 알 수 있다.")
 
 st.markdown("---")
 
@@ -102,7 +102,7 @@ st.plotly_chart(fig2, use_container_width=True)
 
 # 시각화 해석 및 섹션 구분
 with st.container():
-    st.info("💡 **이 그래프로 알 수 있는 것:** 각 장르 내에서 어떤 영화가 많은 총 관객수를 기록하며 흥행을 이끌었는지 직관적으로 비교할 수 있습니다.")
+    st.info("💡 **이 그래프로 알 수 있는 것:** 각 영화의 관객수를 한눈에 볼 수 있다.")
 
 st.markdown("---")
 
@@ -132,14 +132,9 @@ fig3.update_layout(
 
 st.plotly_chart(fig3, use_container_width=True)
 
-# 가장 관객이 많은 영화 및 데이터 연산
-top_movie = df.loc[df['total_audi'].idxmax()]
-top_movie_name = top_movie['movieNm']
-top_movie_audi = top_movie['total_audi']
-
 # 시각화 해석 및 섹션 구분
 with st.container():
-    st.info(f"💡 **이 그래프로 알 수 있는 것:** 대부분의 영화는 총 관객수 **200만 명 이하(주로 50만~100만 명 구간)**에 집중되어 있는 오른쪽 꼬리가 긴 분포를 보이며, 가장 관객 수가 많은 영화는 **'{top_movie_name}'**(약 {top_movie_audi:,}명)입니다.")
+    st.info("💡 **이 그래프로 알 수 있는 것:** 관객수 100만명 이하의 영화가 매우 많은것을 알수있다.")
 
 st.markdown("---")
 
@@ -176,7 +171,7 @@ st.plotly_chart(fig4, use_container_width=True)
 
 # 시각화 해석 및 섹션 구분
 with st.container():
-    st.info("💡 **이 그래프로 알 수 있는 것:** 개봉일 스크린수가 많을수록 대체로 총 관객수가 높게 나타나는 양의 상관관계를 보여주며, 초기 스크린 확보가 흥행의 중요한 요소임을 알 수 있습니다.")
+    st.info("💡 **이 그래프로 알 수 있는 것:** 개봉 스크린수와 관객수는 비례하는것을 알 수 있다.")
 
 st.markdown("---")
 
